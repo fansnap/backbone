@@ -61,57 +61,57 @@ $(document).ready(function() {
   });
 
   asyncTest("Controller: pushState routes simple", 2, function() {
-    controller.saveLocation('/help/api');
+    controller.loadUrl('/help/api');
     setTimeout(function() {
       equals(controller.helpQuery, 'api');
       equals(controller.helpPage, undefined);
       start();
-      controller.saveLocation(originalUrl);
+      controller.loadUrl(originalUrl);
     }, 10);
   });
   
   asyncTest("Controller: pushState routes (two part)", 2, function() {
-    controller.saveLocation('/search/nyc/p10');
+    controller.loadUrl('/search/nyc/p10');
     setTimeout(function() {
       equals(controller.query, 'nyc');
       equals(controller.page, '10');
       start();
-      controller.saveLocation(originalUrl);
+      controller.loadUrl(originalUrl);
     }, 10);
   });
   
   asyncTest("Controller: pushState routes (splats)", function() {
-    controller.saveLocation('/splat/long-list/of/splatted_99args/end');
+    controller.loadUrl('/splat/long-list/of/splatted_99args/end');
     setTimeout(function() {
       equals(controller.args, 'long-list/of/splatted_99args');
       start();
-      controller.saveLocation(originalUrl);
+      controller.loadUrl(originalUrl);
     }, 10);
   });
   
   asyncTest("Controller: pushState routes (complex)", 3, function() {
-    controller.saveLocation('/one/two/three/complex-part/four/five/six/seven');
+    controller.loadUrl('/one/two/three/complex-part/four/five/six/seven');
     setTimeout(function() {
       equals(controller.first, 'one/two/three');
       equals(controller.part, 'part');
       equals(controller.rest, 'four/five/six/seven');
       start();
-      controller.saveLocation(originalUrl);
+      controller.loadUrl(originalUrl);
     }, 10);
   });
   
   asyncTest("Controller: pushState routes (query)", 2, function() {
-    controller.saveLocation('/mandel?a=b&c=d');
+    controller.loadUrl('/mandel?a=b&c=d');
     setTimeout(function() {
       equals(controller.entity, 'mandel');
       equals(controller.queryArgs, 'a=b&c=d');
       start();
-      controller.saveLocation(originalUrl);
+      controller.loadUrl(originalUrl);
     }, 10);
   });
   
   asyncTest("Controller: pushState routes (anything)", 1, function() {
-    controller.saveLocation('/doesnt-match-a-route');
+    controller.loadUrl('/doesnt-match-a-route');
     setTimeout(function() {
       equals(controller.anything, 'doesnt-match-a-route');
       start();
@@ -120,7 +120,7 @@ $(document).ready(function() {
   });
   
   asyncTest("Controller: pushState routes (hashbang)", 2, function() {
-    controller.saveLocation('/search/news');
+    controller.loadUrl('/search/news');
     setTimeout(function() {
       equals(controller.query, 'news');
       equals(controller.page, undefined);

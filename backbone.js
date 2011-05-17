@@ -688,6 +688,14 @@
     saveLocation : function(fragment) {
       Backbone.history.saveLocation(fragment);
     },
+    
+    // Simple proxy to `Backbone.history` to both save a fragment into the
+    // history and to then load the route at that fragment. Used in place
+    // of settings `window.location.hash` when using `window.history.pushState`.
+    loadUrl : function(fragment) {
+      Backbone.history.saveLocation(fragment);
+      Backbone.history.loadUrl();
+    },
 
     // Bind all defined routes to `Backbone.history`. We have to reverse the
     // order of the routes here to support behavior where the most general
@@ -769,8 +777,9 @@
 
     // Start the hash change handling, returning `true` if the current URL matches
     // an existing route, and `false` otherwise.
-    start : function(force) {
-      if (historyStarted && !force) throw new Error("Backbone.history has already been started");
+    start : function(options) {
+      this.options = _.extend({}, {root: '/'}, this.options, options);
+      if (historyStarted && !this.options.force) throw new Error("Backbone.history has already been started");
       var docMode = document.documentMode;
       var oldIE = (isExplorer.exec(navigator.userAgent.toLowerCase()) && (!docMode || docMode <= 7));
       if (oldIE) {
@@ -803,9 +812,7 @@
       if (current == this.fragment ||
           current == decodeURIComponent(this.fragment)) return false;
       
-      if (this.options.pushState) {
-        window.history.pushState({}, document.title, loc.protocol + '//' + loc.host + current);
-      } else if (this.iframe) {
+      if (this.iframe) {
         window.location.hash = this.iframe.location.hash = current;
       }
       this.loadUrl();
@@ -837,7 +844,6 @@
         var loc = window.location;
         this.fragment = fragment;
         window.history.pushState({}, document.title, loc.protocol + '//' + loc.host + fragment);
-        this.loadUrl();
       } else {
         window.location.hash = this.fragment = fragment;
         if (this.iframe && (fragment != this.getFragment(this.iframe.location))) {
