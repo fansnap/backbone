@@ -47,7 +47,7 @@ $(document).ready(function() {
   var controller = new Controller({testing: 101});
 
   Backbone.history.interval = 9;
-  Backbone.history.start(true);
+  Backbone.history.start({force: true});
 
   test("Controller: initialize", function() {
     equals(controller.testing, 101);

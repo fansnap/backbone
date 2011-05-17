@@ -768,6 +768,8 @@
           loc = window.location.pathname;
           var search = window.location.search;
           if (search) loc = loc + search;
+          if (loc.indexOf(this.options.root) == 0) loc = loc.substr(this.options.root.length);
+          console.log(['getFragment', this.options.root, loc]);
         } else {
           loc = window.location.hash;
         }
@@ -823,6 +825,7 @@
     // returns `false`.
     loadUrl : function() {
       var fragment = this.fragment = this.getFragment();
+      console.log(['loadUrl', fragment]);
       var matched = _.any(this.handlers, function(handler) {
         if (handler.route.test(fragment)) {
           handler.callback(fragment);
@@ -842,6 +845,7 @@
       
       if (this.options.pushState) {
         var loc = window.location;
+        if (fragment.indexOf(this.options.root) != 0) fragment = this.options.root + fragment;
         this.fragment = fragment;
         window.history.pushState({}, document.title, loc.protocol + '//' + loc.host + fragment);
       } else {

@@ -5,13 +5,13 @@ $(document).ready(function() {
   var Controller = Backbone.Controller.extend({
 
     routes: {
-      "/help/:query":                "help",
-      "/search/:query":              "search",
-      "/search/:query/p:page":       "search",
-      "/splat/*args/end":            "splat",
-      "/*first/complex-:part/*rest": "complex",
-      "/:entity?*args":              "query",
-      "/*anything":                  "anything"
+      "help/:query":                "help",
+      "search/:query":              "search",
+      "search/:query/p:page":       "search",
+      "splat/*args/end":            "splat",
+      "*first/complex-:part/*rest": "complex",
+      ":entity?*args":              "query",
+      "*anything":                  "anything"
     },
 
     initialize : function(options) {
@@ -54,14 +54,14 @@ $(document).ready(function() {
   var controller = new Controller({testing: 101, pushState: true});
 
   Backbone.history.interval = 9;
-  Backbone.history.start(true);
+  Backbone.history.start({force: true});
 
   test("Controller: initialize", function() {
     equals(controller.testing, 101);
   });
 
   asyncTest("Controller: pushState routes simple", 2, function() {
-    controller.loadUrl('/help/api');
+    controller.loadUrl('help/api');
     setTimeout(function() {
       equals(controller.helpQuery, 'api');
       equals(controller.helpPage, undefined);
@@ -71,7 +71,7 @@ $(document).ready(function() {
   });
   
   asyncTest("Controller: pushState routes (two part)", 2, function() {
-    controller.loadUrl('/search/nyc/p10');
+    controller.loadUrl('search/nyc/p10');
     setTimeout(function() {
       equals(controller.query, 'nyc');
       equals(controller.page, '10');
@@ -81,7 +81,7 @@ $(document).ready(function() {
   });
   
   asyncTest("Controller: pushState routes (splats)", function() {
-    controller.loadUrl('/splat/long-list/of/splatted_99args/end');
+    controller.loadUrl('splat/long-list/of/splatted_99args/end');
     setTimeout(function() {
       equals(controller.args, 'long-list/of/splatted_99args');
       start();
@@ -90,7 +90,7 @@ $(document).ready(function() {
   });
   
   asyncTest("Controller: pushState routes (complex)", 3, function() {
-    controller.loadUrl('/one/two/three/complex-part/four/five/six/seven');
+    controller.loadUrl('one/two/three/complex-part/four/five/six/seven');
     setTimeout(function() {
       equals(controller.first, 'one/two/three');
       equals(controller.part, 'part');
@@ -101,7 +101,7 @@ $(document).ready(function() {
   });
   
   asyncTest("Controller: pushState routes (query)", 2, function() {
-    controller.loadUrl('/mandel?a=b&c=d');
+    controller.loadUrl('mandel?a=b&c=d');
     setTimeout(function() {
       equals(controller.entity, 'mandel');
       equals(controller.queryArgs, 'a=b&c=d');
@@ -111,7 +111,7 @@ $(document).ready(function() {
   });
   
   asyncTest("Controller: pushState routes (anything)", 1, function() {
-    controller.loadUrl('/doesnt-match-a-route');
+    controller.loadUrl('doesnt-match-a-route');
     setTimeout(function() {
       equals(controller.anything, 'doesnt-match-a-route');
       start();
@@ -120,7 +120,7 @@ $(document).ready(function() {
   });
   
   asyncTest("Controller: pushState routes (hashbang)", 2, function() {
-    controller.loadUrl('/search/news');
+    controller.loadUrl('search/news');
     setTimeout(function() {
       equals(controller.query, 'news');
       equals(controller.page, undefined);
