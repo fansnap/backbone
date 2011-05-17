@@ -769,7 +769,6 @@
           var search = window.location.search;
           if (search) loc = loc + search;
           if (loc.indexOf(this.options.root) == 0) loc = loc.substr(this.options.root.length);
-          console.log(['getFragment', this.options.root, loc]);
         } else {
           loc = window.location.hash;
         }
@@ -795,7 +794,7 @@
         setInterval(this.checkUrl, this.interval);
       }
       historyStarted = true;
-      return this.loadUrl();
+      return this.loadUrl() || this.loadUrl(window.location.hash);
     },
 
     // Add a route to be tested when the hash changes. Routes added later may
@@ -817,15 +816,14 @@
       if (this.iframe) {
         window.location.hash = this.iframe.location.hash = current;
       }
-      this.loadUrl();
+      this.loadUrl() || this.loadUrl(window.location.hash);
     },
 
     // Attempt to load the current URL fragment. If a route succeeds with a
     // match, returns `true`. If no defined routes matches the fragment,
     // returns `false`.
-    loadUrl : function() {
-      var fragment = this.fragment = this.getFragment();
-      console.log(['loadUrl', fragment]);
+    loadUrl : function(fragment) {
+      fragment = this.fragment = this.getFragment(fragment);
       var matched = _.any(this.handlers, function(handler) {
         if (handler.route.test(fragment)) {
           handler.callback(fragment);
