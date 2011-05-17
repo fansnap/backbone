@@ -43,10 +43,11 @@ $(document).ready(function() {
 
   });
 
+  Backbone.history = null;
   var controller = new Controller({testing: 101});
 
   Backbone.history.interval = 9;
-  Backbone.history.start();
+  Backbone.history.start(true);
 
   test("Controller: initialize", function() {
     equals(controller.testing, 101);

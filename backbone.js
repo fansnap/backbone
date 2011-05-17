@@ -649,6 +649,7 @@
   Backbone.Controller = function(options) {
     options || (options = {});
     if (options.routes) this.routes = options.routes;
+    this.pushState = this._supportsPushState(options.pushState);
     this._bindRoutes();
     this.initialize(options);
   };
@@ -673,7 +674,7 @@
     //     });
     //
     route : function(route, name, callback) {
-      Backbone.history || (Backbone.history = new Backbone.History);
+      Backbone.history || (Backbone.history = new Backbone.History({pushState: this.pushState}));
       if (!_.isRegExp(route)) route = this._routeToRegExp(route);
       Backbone.history.route(route, _.bind(function(fragment) {
         var args = this._extractParameters(route, fragment);
@@ -715,6 +716,11 @@
     // extracted parameters.
     _extractParameters : function(route, fragment) {
       return route.exec(fragment).slice(1);
+    },
+    
+    // If pushState is enabled, check if browser supports pushState in history.
+    _supportsPushState : function(pushState) {
+      return !!(pushState && window.history && window.history.pushState);
     }
 
   });
@@ -724,7 +730,8 @@
 
   // Handles cross-browser history management, based on URL hashes. If the
   // browser does not support `onhashchange`, falls back to polling.
-  Backbone.History = function() {
+  Backbone.History = function(options) {
+    this.options = options || (options = {});
     this.handlers = [];
     this.fragment = this.getFragment();
     _.bindAll(this, 'checkUrl');
@@ -748,19 +755,30 @@
 
     // Get the cross-browser normalized URL fragment.
     getFragment : function(loc) {
-      return (loc || window.location).hash.replace(hashStrip, '');
+      if (!loc) {
+        if (this.options.pushState) {
+          loc = window.location.pathname;
+          var search = window.location.search;
+          if (search) loc = loc + search;
+        } else {
+          loc = window.location.hash;
+        }
+      }
+      return loc.replace(hashStrip, '');
     },
 
     // Start the hash change handling, returning `true` if the current URL matches
     // an existing route, and `false` otherwise.
-    start : function() {
-      if (historyStarted) throw new Error("Backbone.history has already been started");
+    start : function(force) {
+      if (historyStarted && !force) throw new Error("Backbone.history has already been started");
       var docMode = document.documentMode;
       var oldIE = (isExplorer.exec(navigator.userAgent.toLowerCase()) && (!docMode || docMode <= 7));
       if (oldIE) {
         this.iframe = $('<iframe src="javascript:0" tabindex="-1" />').hide().appendTo('body')[0].contentWindow;
       }
-      if ('onhashchange' in window && !oldIE) {
+      if (this.options.pushState) {
+        $(window).bind('popstate', this.checkUrl);
+      } else if ('onhashchange' in window && !oldIE) {
         $(window).bind('hashchange', this.checkUrl);
       } else {
         setInterval(this.checkUrl, this.interval);
@@ -777,14 +795,17 @@
 
     // Checks the current URL to see if it has changed, and if it has,
     // calls `loadUrl`, normalizing across the hidden iframe.
-    checkUrl : function() {
+    checkUrl : function(e) {
       var current = this.getFragment();
       if (current == this.fragment && this.iframe) {
         current = this.getFragment(this.iframe.location);
       }
       if (current == this.fragment ||
           current == decodeURIComponent(this.fragment)) return false;
-      if (this.iframe) {
+      
+      if (this.options.pushState) {
+        window.history.pushState({}, document.title, loc.protocol + '//' + loc.host + current);
+      } else if (this.iframe) {
         window.location.hash = this.iframe.location.hash = current;
       }
       this.loadUrl();
@@ -809,11 +830,20 @@
     // a `hashchange` event.
     saveLocation : function(fragment) {
       fragment = (fragment || '').replace(hashStrip, '');
-      if (this.fragment == fragment) return;
-      window.location.hash = this.fragment = fragment;
-      if (this.iframe && (fragment != this.getFragment(this.iframe.location))) {
-        this.iframe.document.open().close();
-        this.iframe.location.hash = fragment;
+      if (this.fragment == fragment ||
+          this.fragment == decodeURIComponent(fragment)) return;
+      
+      if (this.options.pushState) {
+        var loc = window.location;
+        this.fragment = fragment;
+        window.history.pushState({}, document.title, loc.protocol + '//' + loc.host + fragment);
+        this.loadUrl();
+      } else {
+        window.location.hash = this.fragment = fragment;
+        if (this.iframe && (fragment != this.getFragment(this.iframe.location))) {
+          this.iframe.document.open().close();
+          this.iframe.location.hash = fragment;
+        }
       }
     }
 
