@@ -96,7 +96,11 @@ $(document).ready(function() {
     a = new Backbone.Model(attrs);
     ok(a.isNew(), "it should be new");
     attrs = { 'foo': 1, 'bar': 2, 'baz': 3, 'id': -5 };
-    ok(a.isNew(), "any defined ID is legal, negative or positive");
+    a = new Backbone.Model(attrs);
+    ok(!a.isNew(), "any defined ID is legal, negative or positive");
+    attrs = { 'foo': 1, 'bar': 2, 'baz': 3, 'id': 0 };
+    a = new Backbone.Model(attrs);
+    ok(!a.isNew(), "any defined ID is legal, including zero");
   });
 
   test("Model: get", function() {
@@ -276,6 +280,13 @@ $(document).ready(function() {
     ok(_.isEqual(lastRequest[1], doc));
   });
 
+  test("Model: non-persisted destroy", function() {
+    attrs = { 'foo': 1, 'bar': 2, 'baz': 3};
+    a = new Backbone.Model(attrs);
+    a.sync = function() { throw "should not be called"; };
+    ok(a.destroy(), "non-persisted model should not call sync");
+  });
+
   test("Model: validate", function() {
     var lastError;
     var model = new Backbone.Model();
@@ -368,6 +379,32 @@ $(document).ready(function() {
 
     notEqual(Child.prototype.instancePropDiff, Parent.prototype.instancePropDiff);
     notEqual(Child.prototype.instancePropDiff, undefined);
+  });
+
+  test("Model: Nested change events don't clobber previous attributes", function() {
+    var A = Backbone.Model.extend({
+      initialize: function() {
+        this.bind("change:state", function(a, newState) {
+          equals(a.previous('state'), undefined);
+          equals(newState, 'hello');
+          // Fire a nested change event.
+          this.set({ other: "whatever" });
+        });
+      }
+    });
+
+    var B = Backbone.Model.extend({
+      initialize: function() {
+        this.get("a").bind("change:state", function(a, newState) {
+          equals(a.previous('state'), undefined);
+          equals(newState, 'hello');
+        });
+      }
+    });
+
+    a = new A();
+    b = new B({a: a});
+    a.set({state: 'hello'});
   });
 
 });
